@@ -3,8 +3,19 @@
 def player(prev_play, opponent_history=[]):
     opponent_history.append(prev_play)
 
-    guess = "R"
-    if len(opponent_history) > 2:
-        guess = opponent_history[-2]
-
-    return guess
+    if len(opponent_history) == 0:
+        return "R"
+    
+    # Count occurrences of each move
+    counts = {"R": opponent_history.count("R"), "P": opponent_history.count("P"), "S": opponent_history.count("S")}
+    
+    # Find the move with the highest count
+    most_frequent = max(counts, key=counts.get)
+    
+    # Play the move that beats the opponent's most frequent move
+    if most_frequent == "R":
+        return "P"
+    elif most_frequent == "P":
+        return "S"
+    else:
+        return "R"
