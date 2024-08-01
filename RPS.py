@@ -1,11 +1,11 @@
 # The example function below keeps track of the opponent's history and plays whatever the opponent played two plays ago. It is not a very good player so you will need to change the code to pass the challenge.
 
 def player(prev_play, opponent_history=[]):
-    # Initialize the opponent's history if it's the first game
+    # Add the previous play to the opponent's history
     if prev_play:
         opponent_history.append(prev_play)
 
-    # Initialize Markov chain dictionary and counters for adaptive strategy
+    # Initialize Markov chain dictionary and counters
     if 'markov_chain' not in player.__dict__:
         player.markov_chain = {}
         player.last_moves = ""
@@ -13,7 +13,7 @@ def player(prev_play, opponent_history=[]):
         player.markov_wins = 0
         player.freq_wins = 0
     
-    # Update Markov chain with previous moves
+    # Update the Markov chain with previous moves
     if len(player.last_moves) >= 5:
         if player.last_moves not in player.markov_chain:
             player.markov_chain[player.last_moves] = {'R': 0, 'P': 0, 'S': 0}
@@ -37,25 +37,18 @@ def player(prev_play, opponent_history=[]):
     predicted_move = max(possible_moves, key=possible_moves.get)
     markov_move = counter_moves[predicted_move]
     
-    # Switch strategy based on performance
-    if player.strategy == "markov":
-        if prev_play == counter_moves[markov_move]:
-            player.markov_wins += 1
-        else:
-            player.markov_wins = max(player.markov_wins - 1, 0)
-        
-        if player.markov_wins < player.freq_wins:
-            player.strategy = "frequency"
-            player.markov_wins = 0
+    # Dynamic strategy adjustment based on performance
+    markov_threshold = 0.5
+    freq_threshold = 0.5
     
-    if player.strategy == "frequency":
-        if prev_play == counter_moves[freq_move]:
-            player.freq_wins += 1
-        else:
-            player.freq_wins = max(player.freq_wins - 1, 0)
+    if len(opponent_history) > 10:
+        # Determine the performance of each strategy
+        markov_performance = player.markov_wins / len(opponent_history)
+        freq_performance = player.freq_wins / len(opponent_history)
         
-        if player.freq_wins < player.markov_wins:
+        if markov_performance > markov_threshold:
             player.strategy = "markov"
-            player.freq_wins = 0
+        elif freq_performance > freq_threshold:
+            player.strategy = "frequency"
     
     return markov_move if player.strategy == "markov" else freq_move
