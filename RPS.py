@@ -4,36 +4,29 @@ def player(prev_play, opponent_history=[]):
     # Initialize the opponent's history if it's the first game
     if prev_play:
         opponent_history.append(prev_play)
-    
+
     # Initialize Markov chain dictionary
     if 'markov_chain' not in player.__dict__:
-        player.markov_chain = {key: 0 for key in ["RR", "RP", "RS", "PR", "PP", "PS", "SR", "SP", "SS"]}
-        player.last_move = None
+        player.markov_chain = {}
+        player.last_moves = ""
     
-    # Update Markov chain with the previous move if both are valid
-    if player.last_move is not None and prev_play:
-        player.markov_chain[player.last_move + prev_play] += 1
+    # Update Markov chain with previous moves
+    if len(player.last_moves) >= 5:
+        if player.last_moves not in player.markov_chain:
+            player.markov_chain[player.last_moves] = {'R': 0, 'P': 0, 'S': 0}
+        if prev_play:
+            player.markov_chain[player.last_moves][prev_play] += 1
     
-    # Set the last move to the current prev_play for the next round
-    player.last_move = prev_play if prev_play else player.last_move
+    # Set the last moves
+    player.last_moves = (player.last_moves + prev_play)[-5:] if prev_play else player.last_moves
     
-    # Default first moves
-    if len(opponent_history) < 2:
+    # Default first move
+    if len(opponent_history) < 5:
         return "R"
     
-    # Predict next move based on Markov chain
-    last_two = "".join(opponent_history[-2:])
-    possible_moves = [last_two + "R", last_two + "P", last_two + "S"]
-    
-    # Filter out invalid keys
-    possible_moves = [move for move in possible_moves if move in player.markov_chain]
-    
-    # In case all possible moves are invalid, default to 'R'
-    if not possible_moves:
-        return "R"
-    
-    predictions = {move: player.markov_chain[move] for move in possible_moves}
-    predicted_move = max(predictions, key=predictions.get)[-1]
+    # Predict the opponent's next move based on the most frequent subsequent move
+    possible_moves = player.markov_chain.get(player.last_moves, {'R': 0, 'P': 0, 'S': 0})
+    predicted_move = max(possible_moves, key=possible_moves.get)
     
     # Counter the predicted move
     counter_moves = {"R": "P", "P": "S", "S": "R"}
